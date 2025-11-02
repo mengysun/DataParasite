@@ -11,7 +11,7 @@ Traditional deep research tools excel at individual deep-dive inquiries but stru
 
 ### Elegant Simplicity Over Multi-Agent Complexity
 Implementing parallel curation of entity information typically demands sophisticated multi-agent orchestration systems with planners, coordinators, and specialized sub-agents [2]—solutions that are often over-engineered and brittle. Data Parasite takes a different approach: **leverage off-the-shelf coding agents as orchestrators** instead of building complex agent frameworks from scratch. The entire system reduces to:
-- A single Python script that performs parallel agentic search over a CSV input
+- A single Python script that performs parallel agentic web search based on a CSV input
 - A well-defined YAML config file that specifies task structure, prompts, and schema
 - Powerful coding agents (or even ChatGPT's web interface) to generate custom configs from natural language descriptions
 
