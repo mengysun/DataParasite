@@ -2,7 +2,7 @@
 
 > *The name is inspired by the ethos of Park & Greene's "[A parasite's perspective on data sharing](https://academic.oup.com/gigascience/article/7/11/giy129/5140693)" [1]*
 
-DataParasite is a simple yet versatile context engineered for scalable online data collection with LLMs. The project is optimized for coding agents (for example, Cursor-agent CLI automations) that orchestrate data collection runs end-to-end (with flexible level of human-in-the-loop), while still supporting a fully manual flow through the standalone Python script or by using the ChatGPT web interface to help you draft task configs. Any reasonably capable coding agent can operate the workflow: give it a short task description, point it to `CONSTITUTION.md` for orientation, and it will draft configs, gather entities from a CSV you provide, or even curate the list online itself when internet access is available before running the pipeline.
+DataParasite is a simple yet versatile context engineered for scalable online data collection with LLMs. The project is optimized for coding agents (for example, Cursor-agent CLI automations) that orchestrate data collection runs end-to-end (with flexible level of human-in-the-loop), while still supporting a fully manual flow through the standalone Python script together with the ChatGPT web interface to help you draft task configs. Any reasonably capable coding agent can operate the workflow: give it a short task description, point it to `CONSTITUTION.md` for orientation, and it will draft configs, gather entities from a CSV you provide, or even curate the list online itself when internet access is available before running the pipeline.
 
 ## Key Advantages
 
@@ -29,7 +29,7 @@ Modern coding agents increasingly incorporate web search capabilities, unlocking
 1. Clone/Download this repository and `cd` into it.
 2. Ensure Python 3.10+ and install dependencies: `pip install -r requirements.txt`.
 3. Export your OpenAI credential: `export OPENAI_API_KEY=sk-...`.
-4. Install the Cursor-agent CLI (recommended) with the Playwright MCP enabled. Alternatively, you can use Codex CLI from https://github.com/openai/codex (note: internet access must be enabled using the `/approval` command for curating datasets).
+4. Install the Cursor-agent CLI (recommended) with the Playwright MCP enabled. Alternatively, you can use Codex CLI from https://github.com/openai/codex (note: internet access must be enabled using the `/approvals` command for curating datasets).
 5. Run the sample task (the `Path2Power` template<sup>†</sup> tracks academic hiring patterns):
    ```
    python src/data_parasite.py \
