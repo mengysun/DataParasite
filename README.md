@@ -48,6 +48,7 @@ Modern coding agents increasingly incorporate web search capabilities, unlocking
 - `--output_file`: destination JSONL; a cleaned CSV with inputs and outputs is created automatically.
 - `--model`: optional override for the model named in the config.
 - `--sample`: randomly process only N rows.
+- `--seed`: random seed for sampling (for reproducibility when using `--sample`).
 - `--reasoning-effort`: `low|medium|high`, applicable to gpt-5 family models.
 - `--search-context-size`: `low|medium|high` to adjust web-search context.
 - `--max-workers`: parallel workers (defaults to a CPU-based heuristic).

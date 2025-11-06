@@ -286,6 +286,7 @@ Example:
     ap.add_argument("--output_file", required=True, help="Output JSONL path")
     ap.add_argument("--model", help="OpenAI model (overrides config default)")
     ap.add_argument("--sample", type=int, help="Randomly sample N rows")
+    ap.add_argument("--seed", type=int, help="Random seed for sampling (for reproducibility)")
     ap.add_argument("--reasoning-effort", choices=["low","medium","high"], default="medium",
                     help="Only for gpt-5* models; ignored otherwise")
     ap.add_argument("--search-context-size", choices=["low","medium","high"], default="medium")
@@ -325,6 +326,8 @@ Example:
     # Load and optionally sample data
     rows = load_rows(src)
     if args.sample and args.sample < len(rows):
+        if args.seed is not None:
+            random.seed(args.seed)
         rows = random.sample(rows, args.sample)
         log.info("Sampled %d rows", args.sample)
 
