@@ -1,0 +1,93 @@
+# ============================================================================
+# Task Configuration: R1 University Job Market Search
+# ============================================================================
+# This configuration searches for Tenure Track Assistant Professor positions
+# at R1 universities in the research areas of: Evolutionary Biology, Human Genetics,
+# Computational Biology, or Population Genetics
+
+# --- Output Schema ---
+# Define the fields you want to extract and their types.
+# Supported types: str, Optional[str], int, Optional[int]
+output_schema:
+  job_ads_count:
+    type: Optional[str]
+    description: "Number of job ads found"
+  job_ads_list:
+    type: Optional[str]
+    description: "List of job ads with URL, post date, and application deadline, formatted as: 'URL | Post Date | Application Deadline' (one per line)"
+  search_notes:
+    type: Optional[str]
+    description: "Clear, human-readable summary of the search process, what was found, and any relevant observations"
+
+# --- CSV Column Mapping ---
+# Map CSV column names to variable names used in prompts
+# Format: csv_column_name: variable_name_for_prompt
+csv_column_mapping:
+  name: university_name
+  city: city
+  state: state
+
+# --- Required Columns ---
+# CSV columns that must have non-empty values (will error if empty)
+# Use actual CSV column names here, not the mapped variable names
+required_columns:
+  - name
+
+# --- Prompts ---
+# System prompt sets the overall behavior
+prompt_system: >
+  You are an expert in using web search to find current academic job postings.
+  Use general web search to find job openings. Always verify that URLs exist and are accessible
+  before including them. Only include URLs that are currently active and lead to valid job postings.
+
+# User prompt with {variable} placeholders matching csv_column_mapping values
+prompt_user: |
+  You are a research assistant helping to find academic job postings.
+  
+  Task: Search for current Tenure Track Assistant Professor positions in the following research areas:
+  - Evolutionary Biology
+  - Human Genetics
+  - Computational Biology
+  - Population Genetics
+  
+  at {university_name} ({city}, {state}).
+  
+  Use general web search (e.g., Google search) with queries like:
+  "Assistant Professor Evolutionary Biology {university_name}"
+  "Assistant Professor Human Genetics {university_name}"
+  "Assistant Professor Computational Biology {university_name}"
+  "Assistant Professor Population Genetics {university_name}"
+  "Tenure Track Evolution {university_name}"
+  "Tenure Track Genetics {university_name}"
+  
+  Return STRICT JSON (no extra text) with fields:
+  {{
+    "job_ads_count": "<number of distinct job ads found or 'not_found'>",
+    "job_ads_list": "<List of job ads, one per line, formatted as: 'URL | Post Date | Application Deadline'. Use 'not_available' for missing dates. If none found, return 'not_found'><url>https://example.com</url>",
+    "search_notes": "<Write a clear, human-readable summary in plain English. Describe: what search terms you used, where you searched, what you found (or didn't find), and any notable observations. Use complete sentences and avoid technical jargon. If no search was performed, return 'not_found'>"
+  }}
+  
+  IMPORTANT RULES:
+  - Search for CURRENT job postings (active/open positions)
+  - ONLY include Tenure Track Assistant Professor positions (exclude postdocs, research positions, non-tenure-track, associate/full professor positions)
+  - Only include positions that are clearly related to at least one of: Evolutionary Biology, Human Genetics, Computational Biology, or Population Genetics
+  - CRITICAL: Before including any URL in job_ads_list, you MUST verify that the URL exists and is accessible
+  - CRITICAL: Check that each URL actually leads to a current, active job posting (not a 404 error, not an archived/expired posting)
+  - CRITICAL: Do NOT include URLs that are outdated, broken, or lead to pages that no longer exist
+  - For each job ad found, extract the post date and application deadline from the job posting page
+  - Format dates as YYYY-MM-DD when possible, or use descriptive dates (e.g., "January 15, 2024", "Open until filled")
+  - Format job_ads_list as: "URL | Post Date | Application Deadline" (one per line)
+  - Use "not_available" for post date or application deadline if the information is not found on the job posting
+  - If you find job ads: include the exact URL, post date, and deadline for each job posting in job_ads_list ONLY after verifying the URL is valid and current
+  - If no job ads found: return "not_found" for job_ads_list (NO URL for not_found)
+  - Always include supporting URLs when you have found information
+  - Never include URLs with "not_found" values
+  - Write search_notes in clear, conversational English - explain what you searched for, where you looked, and what you discovered
+  
+  University: "{university_name}" located in {city}, {state}
+  Think, search the web thoroughly, and output ONLY the JSON object.
+
+# --- Model Configuration ---
+# Default model to use (can be overridden via CLI --model flag)
+default_model: gpt-5-mini
+

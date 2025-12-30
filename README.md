@@ -86,6 +86,24 @@ The `MeansOfAscent` task takes its name from the second volume of Robert Caro's 
 
 **URL Accuracy**: Manual review shows that while the core entity data is generally accurate, the supporting URLs provided in results may occasionally link to a search-start page or a broader section, rather than directly to the relevant reference or passage. Sometimes, links may be broken. Finding a way to instruct the model for precise citations remains a headache as of now. The extracted data itself is typically reliable, but you may need to manually locate the specific source context for verification.
 
+## Citation
+
+If you use **DataParasite** in your research, please cite the accompanying working paper:
+
+> Sun, M. (2025). *DataParasite enables scalable and repurposable online data curation*. Working paper, Simons Center for Quantitative Biology, Cold Spring Harbor Laboratory. [PDF](https://www.dropbox.com/scl/fi/59lkltte39uhqqqtyrd5q/DataParasite2025.pdf?rlkey=vo906c2hnu50oz9mumn4uq4ek&st=399z5v65&dl=0)
+
+### BibTeX
+
+```bibtex
+@article{Sun2025DataParasite,
+  title   = {DataParasite Enables Scalable and Repurposable Online Data Curation},
+  author  = {Sun, Mengyi},
+  journal = {Working Paper},
+  year    = {2025},
+  institution = {Simons Center for Quantitative Biology, Cold Spring Harbor Laboratory}
+}
+```
+
 ## References
 
 [1] Park, Y., & Greene, C. S. (2018). A parasite's perspective on data sharing. *GigaScience*, 7(11), giy129. https://doi.org/10.1093/gigascience/giy129
