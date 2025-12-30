@@ -21,7 +21,7 @@ python src/data_parasite.py \
 ## Model Selection: Performance vs. Cost Trade-offs
 
 ### For Best Results (Complex Tasks)
-- **Use GPT-5 series models** (`gpt-5` or `gpt-5-mini`) when each entity requires curating multiple, relatively independent pieces of information
+- **Use GPT-5 series models** (`gpt-5`, `gpt-5-mini`, `gpt-5.1`, `gpt-5.2`) when each entity requires curating multiple, relatively independent pieces of information
 
 - **Note**: When using GPT-5 series, you'll typically want to increase `--max-workers` to see results faster, but be aware that lower OpenAI API usage tiers may limit concurrent requests
 
