@@ -88,9 +88,9 @@ The `MeansOfAscent` task takes its name from the second volume of Robert Caro's 
 
 ## Citation
 
-If you use **DataParasite** in your research, please cite the accompanying working paper:
+If you use **DataParasite** in your research, please cite the accompanying paper:
 
-> Sun, M. (2025). *DataParasite enables scalable and repurposable online data curation*. Working paper, Simons Center for Quantitative Biology, Cold Spring Harbor Laboratory. [PDF](https://www.dropbox.com/scl/fi/59lkltte39uhqqqtyrd5q/DataParasite2025.pdf?rlkey=vo906c2hnu50oz9mumn4uq4ek&st=399z5v65&dl=0)
+> Sun, M. (2025). *DataParasite enables scalable and repurposable online data curation*. arXiv preprint arXiv:2601.02578 [cs.CL]. https://doi.org/10.48550/arXiv.2601.02578
 
 ### BibTeX
 
@@ -98,9 +98,13 @@ If you use **DataParasite** in your research, please cite the accompanying worki
 @article{Sun2025DataParasite,
   title   = {DataParasite Enables Scalable and Repurposable Online Data Curation},
   author  = {Sun, Mengyi},
-  journal = {Working Paper},
+  journal = {arXiv preprint arXiv:2601.02578},
   year    = {2025},
-  institution = {Simons Center for Quantitative Biology, Cold Spring Harbor Laboratory}
+  eprint  = {2601.02578},
+  archivePrefix = {arXiv},
+  primaryClass = {cs.CL},
+  doi     = {10.48550/arXiv.2601.02578},
+  url     = {https://doi.org/10.48550/arXiv.2601.02578}
 }
 ```
 
