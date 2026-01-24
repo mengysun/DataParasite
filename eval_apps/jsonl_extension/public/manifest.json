@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "Curation Helper",
+    "name": "browse_eval",
     "version": "1.0",
     "description": "A side-by-side curation helper extension.",
     "permissions": [
