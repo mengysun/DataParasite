@@ -1,0 +1,4 @@
+id,text
+1,Short text
+2,"This is a very long text that should wrap around when the cell is clicked. It contains enough words to demonstrate the vertical expansion of the cell. If this works correctly, you should see all this text when you click the cell."
+3,Another short text

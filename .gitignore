@@ -27,3 +27,9 @@ Thumbs.db
 logs/
 
 output/
+TODO.md
+
+#tmp 
+tasks/VariantEffectPrediction/
+
+reference_codes/

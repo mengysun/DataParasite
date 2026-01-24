@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "Curation Helper",
+    "version": "1.0",
+    "description": "A side-by-side curation helper extension.",
+    "permissions": [
+        "sidePanel",
+        "tabs",
+        "downloads"
+    ],
+    "side_panel": {
+        "default_path": "index.html"
+    },
+    "action": {
+        "default_title": "Open Curation Helper"
+    },
+    "background": {
+        "service_worker": "background.js"
+    }
+}

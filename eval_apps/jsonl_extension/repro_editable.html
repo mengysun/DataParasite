@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  td {
+    border: 1px solid black;
+    width: 200px;
+    height: 50px;
+    position: relative;
+  }
+  .resize-handle {
+    position: absolute;
+    right: 0; top: 0; bottom: 0; width: 10px;
+    background: red;
+    cursor: col-resize;
+  }
+  .selected {
+    border: 2px solid blue;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+</style>
+</head>
+<body>
+  <table>
+    <tr>
+      <td id="cell" class="selected" contenteditable="true">
+        Some text
+        <div class="resize-handle" contenteditable="false"></div>
+      </td>
+    </tr>
+  </table>
+  <button onclick="focusCell()">Focus Cell</button>
+  <script>
+    function focusCell() {
+      const el = document.getElementById('cell');
+      el.focus();
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      console.log('Focused and range set');
+    }
+  </script>
+</body>
+</html>
