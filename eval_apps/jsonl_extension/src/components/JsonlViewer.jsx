@@ -131,7 +131,7 @@ const JsonlViewer = () => {
                 if (line.trim()) {
                     try {
                         let obj = JSON.parse(line);
-                        
+
                         if (isNew) {
                             // Initialize placeholders if creating new file
                             if (!obj.user_annotations) {
@@ -177,7 +177,7 @@ const JsonlViewer = () => {
                 }
                 return JSON.stringify(newEntry);
             }).join('\n');
-            
+
             await writeFileText(handle, outputLines);
             setSaveStatus('saved');
             setTimeout(() => setSaveStatus(''), 2000);
@@ -203,12 +203,12 @@ const JsonlViewer = () => {
                     [key]: { ...fieldAnnot, [field]: value }
                 }
             };
-            
+
             // Trigger auto-save
             if (outputFileHandle) {
                 debouncedSave(outputFileHandle, entries, newAnnotations);
             }
-            
+
             return newAnnotations;
         });
     };
@@ -276,7 +276,7 @@ const JsonlViewer = () => {
                     </button>
                     {dirHandle && <span style={{ fontSize: '0.9em', color: '#555' }}>Folder Access Granted</span>}
                 </div>
-                
+
                 {dirHandle && fileList.length === 0 && (
                     <div style={{ color: '#888' }}>No .jsonl files found in this folder.</div>
                 )}
@@ -284,11 +284,11 @@ const JsonlViewer = () => {
                 {/* File List Dropdown or List */}
                 {dirHandle && fileList.length > 0 && (
                     <div style={{ marginBottom: '10px' }}>
-                        <select 
-                            style={{ width: '100%', padding: '5px' }} 
+                        <select
+                            style={{ width: '100%', padding: '5px' }}
                             onChange={(e) => {
                                 const file = fileList.find(f => f.name === e.target.value);
-                                if(file) handleSelectFile(file);
+                                if (file) handleSelectFile(file);
                             }}
                             value={currentFileHandle ? currentFileHandle.name : ""}
                         >
@@ -304,7 +304,7 @@ const JsonlViewer = () => {
 
                 {entries.length > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                         <div>
+                        <div>
                             <strong>{currentIndex + 1}</strong> / {entries.length}
                             {saveStatus && <span style={{ marginLeft: '10px', fontSize: '0.8em', color: saveStatus === 'error' ? 'red' : 'green' }}>{saveStatus}</span>}
                         </div>
@@ -324,39 +324,61 @@ const JsonlViewer = () => {
                 {entry && (
                     <div>
                         <h3 style={{ margin: '0 0 10px 0' }}>{entry.mutation_id || 'Entry'}</h3>
-                        {Object.keys(entry).map(key => {
-                            if (TELEMETRY_KEYS.includes(key)) return null;
-                            const val = entry[key];
-                            const currentAnnot = entryAnnots[key] || { correctness: 'unchecked', comment: '' };
-                            const isYes = currentAnnot.correctness === 'yes';
-                            const isNo = currentAnnot.correctness === 'no';
-                            const isUnchecked = currentAnnot.correctness === 'unchecked';
 
-                            return (
-                                <div key={key} style={{ background: 'white', padding: '10px', marginBottom: '15px', borderRadius: '5px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                                    <div style={{ fontWeight: 'bold', fontSize: '0.9em', color: '#555', marginBottom: '5px', textTransform: 'capitalize' }}>
-                                        {key.replace(/_/g, ' ')}
-                                    </div>
-                                    <div style={{ whiteSpace: 'pre-wrap', fontSize: '13px', fontFamily: 'sans-serif', lineHeight: '1.4', marginBottom: '8px', padding: '5px', background: '#f9f9f9' }}>
-                                        {renderContent(val)}
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', borderTop: '1px solid #eee', paddingTop: '8px' }}>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                            <label style={{ display: 'flex', alignItems: 'center', fontSize: '12px', cursor: 'pointer', color: isYes ? '#2e7d32' : 'inherit' }}>
-                                                <input type="radio" name={`correct-${currentIndex}-${key}`} checked={isYes} onChange={() => handleAnnotationChange(key, 'correctness', 'yes')} /> Correct
-                                            </label>
-                                            <label style={{ display: 'flex', alignItems: 'center', fontSize: '12px', cursor: 'pointer', color: isNo ? '#c62828' : 'inherit' }}>
-                                                <input type="radio" name={`correct-${currentIndex}-${key}`} checked={isNo} onChange={() => handleAnnotationChange(key, 'correctness', 'no')} /> Incorrect
-                                            </label>
-                                             <label style={{ display: 'flex', alignItems: 'center', fontSize: '12px', cursor: 'pointer', color: isUnchecked ? '#666' : 'inherit' }}>
-                                                <input type="radio" name={`correct-${currentIndex}-${key}`} checked={isUnchecked} onChange={() => handleAnnotationChange(key, 'correctness', 'unchecked')} /> Unchecked
-                                            </label>
+                        {/* Render Meta-data keys (input_ prefix) first, without annotations */}
+                        {Object.keys(entry)
+                            .filter(key => key.startsWith('input_') && !TELEMETRY_KEYS.includes(key))
+                            .map(key => {
+                                const val = entry[key];
+                                return (
+                                    <div key={key} style={{ background: '#e3f2fd', padding: '10px', marginBottom: '15px', borderRadius: '5px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                        <div style={{ fontWeight: 'bold', fontSize: '0.9em', color: '#1565c0', marginBottom: '5px', textTransform: 'capitalize' }}>
+                                            {key} (Metadata)
                                         </div>
-                                        <textarea placeholder="Comment..." value={currentAnnot.comment || ''} onChange={(e) => handleAnnotationChange(key, 'comment', e.target.value)} style={{ width: '100%', fontSize: '12px', padding: '4px', resize: 'vertical', minHeight: '30px', boxSizing: 'border-box' }} />
+                                        <div style={{ whiteSpace: 'pre-wrap', fontSize: '13px', fontFamily: 'sans-serif', lineHeight: '1.4', padding: '5px', background: 'white' }}>
+                                            {renderContent(val)}
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+
+                        <hr style={{ margin: '20px 0', border: '0', borderTop: '1px solid #ccc' }} />
+
+                        {/* Render Annotation keys (non-input_) */}
+                        {Object.keys(entry)
+                            .filter(key => !key.startsWith('input_') && !TELEMETRY_KEYS.includes(key))
+                            .map(key => {
+                                const val = entry[key];
+                                const currentAnnot = entryAnnots[key] || { correctness: 'unchecked', comment: '' };
+                                const isYes = currentAnnot.correctness === 'yes';
+                                const isNo = currentAnnot.correctness === 'no';
+                                const isUnchecked = currentAnnot.correctness === 'unchecked';
+
+                                return (
+                                    <div key={key} style={{ background: 'white', padding: '10px', marginBottom: '15px', borderRadius: '5px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                        <div style={{ fontWeight: 'bold', fontSize: '0.9em', color: '#555', marginBottom: '5px', textTransform: 'capitalize' }}>
+                                            {key.replace(/_/g, ' ')}
+                                        </div>
+                                        <div style={{ whiteSpace: 'pre-wrap', fontSize: '13px', fontFamily: 'sans-serif', lineHeight: '1.4', marginBottom: '8px', padding: '5px', background: '#f9f9f9' }}>
+                                            {renderContent(val)}
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', borderTop: '1px solid #eee', paddingTop: '8px' }}>
+                                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', fontSize: '12px', cursor: 'pointer', color: isYes ? '#2e7d32' : 'inherit' }}>
+                                                    <input type="radio" name={`correct-${currentIndex}-${key}`} checked={isYes} onChange={() => handleAnnotationChange(key, 'correctness', 'yes')} /> Correct
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', fontSize: '12px', cursor: 'pointer', color: isNo ? '#c62828' : 'inherit' }}>
+                                                    <input type="radio" name={`correct-${currentIndex}-${key}`} checked={isNo} onChange={() => handleAnnotationChange(key, 'correctness', 'no')} /> Incorrect
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', fontSize: '12px', cursor: 'pointer', color: isUnchecked ? '#666' : 'inherit' }}>
+                                                    <input type="radio" name={`correct-${currentIndex}-${key}`} checked={isUnchecked} onChange={() => handleAnnotationChange(key, 'correctness', 'unchecked')} /> Unchecked
+                                                </label>
+                                            </div>
+                                            <textarea placeholder="Comment..." value={currentAnnot.comment || ''} onChange={(e) => handleAnnotationChange(key, 'comment', e.target.value)} style={{ width: '100%', fontSize: '12px', padding: '4px', resize: 'vertical', minHeight: '30px', boxSizing: 'border-box' }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                     </div>
                 )}
             </div>
