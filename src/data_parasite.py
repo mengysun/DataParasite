@@ -13,7 +13,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional, List, Dict, Any, Type
 from pydantic import BaseModel, create_model
-from openai import OpenAI
+from openai import APIConnectionError, APITimeoutError, OpenAI, RateLimitError
 import yaml
 import pandas as pd
 
@@ -135,6 +135,36 @@ def parse_row_data(row: Dict[str, str], mapping: Dict[str, str]) -> Dict[str, st
         data[var_name] = (row.get(csv_col) or "").strip()
     return data
 
+
+def is_retryable_error(error: Exception) -> bool:
+    """Return True for transient API errors worth retrying."""
+    if isinstance(error, (RateLimitError, APITimeoutError, APIConnectionError)):
+        return True
+
+    status_code = getattr(error, "status_code", None)
+    if status_code in {408, 409, 429, 500, 502, 503, 504}:
+        return True
+
+    text = str(error).lower()
+    return any(
+        marker in text
+        for marker in ["timeout", "timed out", "temporarily unavailable", "connection reset"]
+    )
+
+
+def compute_retry_delay(
+    attempt: int,
+    base_delay: float,
+    max_delay: float,
+    jitter_ratio: float,
+) -> float:
+    """Exponential backoff with bounded jitter."""
+    raw_delay = min(max_delay, base_delay * (2 ** attempt))
+    jitter_window = raw_delay * max(0.0, jitter_ratio)
+    lower = max(0.0, raw_delay - jitter_window)
+    upper = raw_delay + jitter_window
+    return random.uniform(lower, upper)
+
 # ============================================================================
 # API INTERACTION
 # ============================================================================
@@ -202,6 +232,10 @@ def run_one(
     row: Dict[str, str],
     reasoning_effort: str,
     search_context_size: str,
+    max_retries: int,
+    retry_base_delay: float,
+    retry_max_delay: float,
+    retry_jitter: float,
 ) -> Dict[str, Any]:
     """Process one entity from the CSV."""
     prompt_vars = parse_row_data(row, config.csv_column_mapping)
@@ -218,31 +252,47 @@ def run_one(
             "response_id": "N/A",
             "duration": time.time() - start,
             "cost": 0.0,
+            "retries_used": 0,
             "error": f"Missing required fields: {missing}"
         }
 
-    try:
-        res = call_model(client, model, config, prompt_vars, reasoning_effort, search_context_size)
-        usage = res["usage"]
-        cost = compute_cost(model, usage)
-        duration = time.time() - start
+    for attempt in range(max_retries + 1):
+        try:
+            res = call_model(client, model, config, prompt_vars, reasoning_effort, search_context_size)
+            usage = res["usage"]
+            cost = compute_cost(model, usage)
+            duration = time.time() - start
 
-        if res["success"]:
-            parsed = res["parsed"]
-            result = {k: tidy(v) for k, v in parsed.model_dump().items()}
-            result.update({f"input_{k}": v for k, v in prompt_vars.items()})
-            
-            return {
-                "ok": True,
-                "prompt_vars": prompt_vars,
-                "result": result,
-                "usage": usage,
-                "response_id": res["response_id"],
-                "duration": duration,
-                "cost": cost,
-                "error": None
-            }
-        else:
+            if res["success"]:
+                parsed = res["parsed"]
+                result = {k: tidy(v) for k, v in parsed.model_dump().items()}
+                result.update({f"input_{k}": v for k, v in prompt_vars.items()})
+
+                return {
+                    "ok": True,
+                    "prompt_vars": prompt_vars,
+                    "result": result,
+                    "usage": usage,
+                    "response_id": res["response_id"],
+                    "duration": duration,
+                    "cost": cost,
+                    "retries_used": attempt,
+                    "error": None
+                }
+
+            error_text = res.get("error") or "incomplete or no parsed payload"
+            should_retry = attempt < max_retries and "incomplete" in error_text.lower()
+            if should_retry:
+                delay = compute_retry_delay(attempt, retry_base_delay, retry_max_delay, retry_jitter)
+                logging.getLogger("data_parasite").warning(
+                    "Incomplete response; retrying in %.2fs (attempt %d/%d)",
+                    delay,
+                    attempt + 1,
+                    max_retries,
+                )
+                time.sleep(delay)
+                continue
+
             return {
                 "ok": False,
                 "prompt_vars": prompt_vars,
@@ -251,20 +301,34 @@ def run_one(
                 "response_id": res["response_id"],
                 "duration": duration,
                 "cost": 0.0,
-                "error": res["error"]
+                "retries_used": attempt,
+                "error": error_text
             }
 
-    except Exception as e:
-        return {
-            "ok": False,
-            "prompt_vars": prompt_vars,
-            "result": _build_error_result(config, prompt_vars),
-            "usage": _empty_usage(),
-            "response_id": "N/A",
-            "duration": time.time() - start,
-            "cost": 0.0,
-            "error": str(e)
-        }
+        except Exception as e:
+            if attempt < max_retries and is_retryable_error(e):
+                delay = compute_retry_delay(attempt, retry_base_delay, retry_max_delay, retry_jitter)
+                logging.getLogger("data_parasite").warning(
+                    "Transient API error (%s); retrying in %.2fs (attempt %d/%d)",
+                    e.__class__.__name__,
+                    delay,
+                    attempt + 1,
+                    max_retries,
+                )
+                time.sleep(delay)
+                continue
+
+            return {
+                "ok": False,
+                "prompt_vars": prompt_vars,
+                "result": _build_error_result(config, prompt_vars),
+                "usage": _empty_usage(),
+                "response_id": "N/A",
+                "duration": time.time() - start,
+                "cost": 0.0,
+                "retries_used": attempt,
+                "error": str(e)
+            }
 
 # ============================================================================
 # MAIN PIPELINE
@@ -293,8 +357,25 @@ Example:
                     help="Only for gpt-5* models; ignored otherwise")
     ap.add_argument("--search-context-size", choices=["low","medium","high"], default="medium")
     ap.add_argument("--max-workers", type=int, default=min(32, (os.cpu_count() or 4)))
+    ap.add_argument("--max-retries", type=int, default=2,
+                    help="Retries per row for transient API failures")
+    ap.add_argument("--retry-base-delay", type=float, default=1.0,
+                    help="Initial retry backoff delay in seconds")
+    ap.add_argument("--retry-max-delay", type=float, default=20.0,
+                    help="Maximum retry backoff delay in seconds")
+    ap.add_argument("--retry-jitter", type=float, default=0.25,
+                    help="Jitter ratio for retry delay randomization")
     ap.add_argument("-v","--verbose", action="store_true")
     args = ap.parse_args()
+
+    if args.max_retries < 0:
+        ap.error("--max-retries must be >= 0")
+    if args.retry_base_delay < 0 or args.retry_max_delay < 0:
+        ap.error("--retry-base-delay and --retry-max-delay must be >= 0")
+    if args.retry_base_delay > args.retry_max_delay:
+        ap.error("--retry-base-delay cannot be greater than --retry-max-delay")
+    if args.retry_jitter < 0:
+        ap.error("--retry-jitter must be >= 0")
 
     log = setup_logger(args.verbose)
 
@@ -343,7 +424,19 @@ Example:
     # Process entities in parallel
     with ThreadPoolExecutor(max_workers=args.max_workers) as ex:
         futures = [
-            ex.submit(run_one, client, model, config, r, args.reasoning_effort, args.search_context_size) 
+            ex.submit(
+                run_one,
+                client,
+                model,
+                config,
+                r,
+                args.reasoning_effort,
+                args.search_context_size,
+                args.max_retries,
+                args.retry_base_delay,
+                args.retry_max_delay,
+                args.retry_jitter,
+            )
             for r in rows
         ]
         
@@ -362,6 +455,7 @@ Example:
                 'web_search_calls': out["usage"].get("web_search_calls", 0),
                 'total_cost': round(out["cost"], 6),
                 'duration_seconds': round(out["duration"], 2),
+                'retries_used': out.get("retries_used", 0),
                 'status': 'success' if out["ok"] else 'failed',
             })
             
@@ -386,14 +480,17 @@ Example:
     log.info("Results with telemetry: %s", out_jsonl)
     
     # Create cleaned CSV with only input and output fields
-    df = pd.read_json(out_jsonl, lines=True)
-    input_cols = [c for c in df.columns if c.startswith('input_')]
-    output_cols = [c for c in config.output_model.model_fields.keys() if c in df.columns]
-    cleaned_df = df[input_cols + output_cols]
-    
-    csv_path = out_jsonl.with_suffix('.csv')
-    cleaned_df.to_csv(csv_path, index=False)
-    log.info("Cleaned CSV saved: %s", csv_path)
+    if out_jsonl.exists() and out_jsonl.stat().st_size > 0:
+        df = pd.read_json(out_jsonl, lines=True)
+        input_cols = [c for c in df.columns if c.startswith('input_')]
+        output_cols = [c for c in config.output_model.model_fields.keys() if c in df.columns]
+        cleaned_df = df[input_cols + output_cols]
+
+        csv_path = out_jsonl.with_suffix('.csv')
+        cleaned_df.to_csv(csv_path, index=False)
+        log.info("Cleaned CSV saved: %s", csv_path)
+    else:
+        log.warning("No records were written; skipping cleaned CSV export")
 
 if __name__ == "__main__":
     main()

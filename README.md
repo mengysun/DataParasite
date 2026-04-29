@@ -52,6 +52,10 @@ Modern coding agents increasingly incorporate web search capabilities, unlocking
 - `--reasoning-effort`: `low|medium|high`, applicable to gpt-5 family models.
 - `--search-context-size`: `low|medium|high` to adjust web-search context.
 - `--max-workers`: parallel workers (defaults to a CPU-based heuristic).
+- `--max-retries`: retries per row for transient API failures (default: `2`).
+- `--retry-base-delay`: initial backoff delay in seconds (default: `1.0`).
+- `--retry-max-delay`: maximum backoff delay in seconds (default: `20.0`).
+- `--retry-jitter`: jitter ratio applied to each retry delay (default: `0.25`).
 - `--verbose`: enable debug logging.
 
 Each JSONL record captures the normalized outputs, original inputs, timing, token usage, and cost estimates, making it easy to audit runs or feed downstream pipelines.
