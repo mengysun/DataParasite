@@ -21,14 +21,14 @@ python src/data_parasite.py \
 ## Model Selection: Performance vs. Cost Trade-offs
 
 ### For Best Results (Complex Tasks)
-- **Use GPT-5 series models** (`gpt-5`, `gpt-5-mini`, `gpt-5.1`, `gpt-5.2`) when each entity requires curating multiple, relatively independent pieces of information
+- **Use `gpt-6-sol` or `gpt-6-astra`** when each entity requires curating multiple, relatively independent pieces of information. Compare a small sample against the default `gpt-6-luna` before paying for a larger model.
 
-- **Note**: When using GPT-5 series, you'll typically want to increase `--max-workers` to see results faster, but be aware that lower OpenAI API usage tiers may limit concurrent requests
+- **Note**: Increase `--max-workers` to process more entities concurrently, but be aware that lower OpenAI API usage tiers may limit concurrent requests.
 
 ### For Simpler, Faster Tasks
-- **Consider `gpt-4o-mini`** for straightforward curation tasks—it's fast, relatively cheap, and often sufficient for simpler extraction needs
+- **Start with `gpt-6-luna`**, the default for task templates and configs that omit `default_model`. It supports web search, structured output, and configurable reasoning for high-volume collection. See the [model documentation](https://developers.openai.com/api/docs/models/gpt-6-luna).
 
-### Setting Workers for GPT-5 Series Models
+### Setting Parallel Workers
 ```bash
 python src/data_parasite.py \
   --config_file tasks/YourTask/config.yaml \

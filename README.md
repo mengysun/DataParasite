@@ -49,13 +49,15 @@ Modern coding agents increasingly incorporate web search capabilities, unlocking
 - `--model`: optional override for the model named in the config.
 - `--sample`: randomly process only N rows.
 - `--seed`: random seed for sampling (for reproducibility when using `--sample`).
-- `--reasoning-effort`: `low|medium|high`, applicable to gpt-5 family models.
+- `--reasoning-effort`: `low|medium|high`, applicable to GPT-5 and GPT-6 family models.
 - `--search-context-size`: `low|medium|high` to adjust web-search context.
 - `--max-workers`: parallel workers (defaults to a CPU-based heuristic).
 - `--max-retries`: SDK retries per request for transient API failures (default: `2`; `0` disables retries). The SDK handles exponential backoff for connection errors, timeouts, HTTP 408/409/429, and 5xx responses.
 - `--verbose`: enable debug logging.
 
 Each JSONL record captures the normalized outputs, original inputs, timing, token usage, and cost estimates, making it easy to audit runs or feed downstream pipelines.
+
+The default model is `gpt-6-luna` for affordable, high-volume collection. Use `--model gpt-6-sol` or `--model gpt-6-astra` for more demanding research. All three support web search and structured output through the Responses API. Cost estimates include cache reads and writes at standard short-context rates; long-context requests and other service tiers can cost more. Check [current pricing](https://developers.openai.com/api/docs/pricing) and evaluate a small sample before a full run.
 
 ## Task Templates
 Seed and user-created task folders live under `tasks/`. Copy an existing folder (for example, `tasks/Path2Power/`), tweak the YAML schema and prompts, drop in your CSV, and rerun the CLI or agent with those paths.
@@ -124,4 +126,5 @@ If you use **DataParasite** in your research, please cite the accompanying paper
 [6] Caro, R. A. (1982). *The Years of Lyndon Johnson: The Path to Power*. Alfred A. Knopf, Inc., New York. ISBN 0-679-72945-3.
 
 [7] Caro, R. A. (1990). *The Years of Lyndon Johnson: Means of Ascent*. Alfred A. Knopf, Inc., New York. ISBN 0-679-73371-X.
+
 

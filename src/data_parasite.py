@@ -21,7 +21,11 @@ import pandas as pd
 # INFRASTRUCTURE CONFIGURATION
 # ============================================================================
 
+# Standard short-context USD rates: https://developers.openai.com/api/docs/pricing
 PRICING = {
+    'gpt-6-luna':  dict(inp=0.10,  cache=0.01,  write=0.125, out=0.50,  search=10.00),
+    'gpt-6-sol':   dict(inp=2.00,  cache=0.20,  write=2.50,  out=10.00, search=10.00),
+    'gpt-6-astra': dict(inp=10.00, cache=1.00,  write=12.50, out=50.00, search=10.00),
     'gpt-5':       dict(inp=1.25,  cache=0.125, out=10.00, search=10.00),
     'gpt-5-mini':  dict(inp=0.25,  cache=0.025, out=2.00,  search=10.00),
     'gpt-5.1':     dict(inp=1.25,  cache=0.125, out=10.00, search=10.00),
@@ -61,7 +65,7 @@ class TaskConfig:
         self.required_columns = data.get('required_columns', [])
         self.prompt_system = data.get('prompt_system', '')
         self.prompt_user = data.get('prompt_user', '')
-        self.default_model = data.get('default_model', 'gpt-4o-mini')
+        self.default_model = data.get('default_model', 'gpt-6-luna')
     
     def _create_output_model(self, schema: Dict[str, Any]) -> Type[BaseModel]:
         """Dynamically create a Pydantic model from YAML schema definition."""
@@ -85,10 +89,12 @@ def setup_logger(verbose: bool) -> logging.Logger:
 
 def compute_cost(model: str, usage: Dict[str, int]) -> float:
     p = PRICING.get(model, PRICING.get('gpt-4o-mini'))
-    non_cached = max(usage.get('input_tokens', 0) - usage.get('cached_tokens', 0), 0)
+    cache_writes = usage.get('cache_write_tokens', 0)
+    non_cached = max(usage.get('input_tokens', 0) - usage.get('cached_tokens', 0) - cache_writes, 0)
     return (
         (non_cached / 1_000_000) * p['inp'] +
         (usage.get('cached_tokens', 0) / 1_000_000) * p['cache'] +
+        (cache_writes / 1_000_000) * p.get('write', p['inp']) +
         (usage.get('output_tokens', 0) / 1_000_000) * p['out'] +
         (usage.get('web_search_calls', 0) / 1000) * p['search']
     )
@@ -156,7 +162,7 @@ def call_model(
         ],
         "tools": [{"type": "web_search", "search_context_size": search_context_size}],
     }
-    if model in {"gpt-5", "gpt-5-mini", "gpt-5.1", "gpt-5.2"}:
+    if model.startswith(("gpt-5", "gpt-6")):
         params["reasoning"] = {"effort": reasoning_effort}
 
     resp = client.responses.parse(text_format=config.output_model, **params)
@@ -167,6 +173,7 @@ def call_model(
         "output_tokens": getattr(usage_obj, "output_tokens", 0) or 0,
         "total_tokens": getattr(usage_obj, "total_tokens", 0) or 0,
         "cached_tokens": getattr(getattr(usage_obj, "input_tokens_details", None), "cached_tokens", 0) or 0,
+        "cache_write_tokens": getattr(getattr(usage_obj, "input_tokens_details", None), "cache_write_tokens", 0) or 0,
     }
     usage.update(extract_tool_usage(resp))
 
@@ -280,7 +287,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Example:
-    python data_parasite.py --config_file task_config.yaml --csv_file input.csv --output_file output.jsonl --model gpt-5-mini
+    python data_parasite.py --config_file task_config.yaml --csv_file input.csv --output_file output.jsonl --model gpt-6-luna
         """
     )
     ap.add_argument("--config_file", required=True, help="Task configuration YAML file")
@@ -290,7 +297,7 @@ Example:
     ap.add_argument("--sample", type=int, help="Randomly sample N rows")
     ap.add_argument("--seed", type=int, help="Random seed for sampling (for reproducibility)")
     ap.add_argument("--reasoning-effort", choices=["low","medium","high"], default="medium",
-                    help="Only for gpt-5* models; ignored otherwise")
+                    help="Only for gpt-5* and gpt-6* models; ignored otherwise")
     ap.add_argument("--search-context-size", choices=["low","medium","high"], default="medium")
     ap.add_argument("--max-workers", type=int, default=min(32, (os.cpu_count() or 4)))
     ap.add_argument("--max-retries", type=int, default=2,
@@ -364,6 +371,7 @@ Example:
                 'input_tokens': out["usage"].get("input_tokens", 0),
                 'output_tokens': out["usage"].get("output_tokens", 0),
                 'cached_tokens': out["usage"].get("cached_tokens", 0),
+                'cache_write_tokens': out["usage"].get("cache_write_tokens", 0),
                 'web_search_calls': out["usage"].get("web_search_calls", 0),
                 'total_cost': round(out["cost"], 6),
                 'duration_seconds': round(out["duration"], 2),
@@ -405,3 +413,4 @@ Example:
 
 if __name__ == "__main__":
     main()
+
