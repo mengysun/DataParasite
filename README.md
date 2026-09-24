@@ -52,10 +52,7 @@ Modern coding agents increasingly incorporate web search capabilities, unlocking
 - `--reasoning-effort`: `low|medium|high`, applicable to gpt-5 family models.
 - `--search-context-size`: `low|medium|high` to adjust web-search context.
 - `--max-workers`: parallel workers (defaults to a CPU-based heuristic).
-- `--max-retries`: retries per row for transient API failures (default: `2`).
-- `--retry-base-delay`: initial backoff delay in seconds (default: `1.0`).
-- `--retry-max-delay`: maximum backoff delay in seconds (default: `20.0`).
-- `--retry-jitter`: jitter ratio applied to each retry delay (default: `0.25`).
+- `--max-retries`: SDK retries per request for transient API failures (default: `2`; `0` disables retries). The SDK handles exponential backoff for connection errors, timeouts, HTTP 408/409/429, and 5xx responses.
 - `--verbose`: enable debug logging.
 
 Each JSONL record captures the normalized outputs, original inputs, timing, token usage, and cost estimates, making it easy to audit runs or feed downstream pipelines.
@@ -127,5 +124,4 @@ If you use **DataParasite** in your research, please cite the accompanying paper
 [6] Caro, R. A. (1982). *The Years of Lyndon Johnson: The Path to Power*. Alfred A. Knopf, Inc., New York. ISBN 0-679-72945-3.
 
 [7] Caro, R. A. (1990). *The Years of Lyndon Johnson: Means of Ascent*. Alfred A. Knopf, Inc., New York. ISBN 0-679-73371-X.
-
 
