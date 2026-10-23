@@ -35,13 +35,14 @@ python src/data_parasite.py \
 | `gpt-6-luna` | Current default; no announced shutdown date. |
 | `gpt-6.1-sol` | Newly added option for demanding tasks, with current pricing. |
 | `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna` | Newly added supported alternatives; no announced shutdown date. |
+| `gpt-5.5` | Newly added supported option; no announced shutdown date. |
 | `gpt-6-sol`, `gpt-6-astra`, `gpt-5.2` | Retained; no announced shutdown date. |
 | `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini` | Still available; scheduled to shut down January 14, 2027. Use `gpt-6-luna` for new tasks. |
 | `gpt-5.1` | Still available; scheduled to shut down April 1, 2027. |
 | `gpt-5`, `gpt-5-mini` | Retained aliases. Their dated `2025-08-07` snapshots are scheduled to shut down December 11, 2026; the API currently reports no shutdown date on the undated aliases. |
 | `o3-deep-research`, `o4-mini-deep-research` | Retired July 23, 2026; removed from supported choices. Use `gpt-6.1-sol` or `gpt-5.6-sol` for research tasks. |
 
-Sources: [OpenAI deprecations](https://developers.openai.com/api/docs/deprecations), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), and [pricing](https://developers.openai.com/api/docs/pricing). A model can still appear in the API's model list after its shutdown date, so listing alone does not establish availability. Account access can also differ.
+Sources: [OpenAI deprecations](https://developers.openai.com/api/docs/deprecations), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), [GPT-5.5](https://developers.openai.com/api/docs/models/gpt-5.5), and [pricing](https://developers.openai.com/api/docs/pricing). A model can still appear in the API's model list after its shutdown date, so listing alone does not establish availability. Account access can also differ.
 
 Supported choices and cost estimates share the `PRICING` table in `src/data_parasite.py`. To add another model, verify web search and structured-output support, then add its current rates there. The CLI and YAML config reject unlisted names instead of silently estimating them at GPT-4o Mini prices. Override an old config with `--model gpt-6-luna` or edit its `default_model`.
 

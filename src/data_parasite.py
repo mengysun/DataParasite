@@ -35,6 +35,7 @@ PRICING = {
     'gpt-5-mini':  dict(inp=0.25,  cache=0.025, out=2.00,  search=10.00),
     'gpt-5.1':     dict(inp=1.25,  cache=0.125, out=10.00, search=10.00),
     'gpt-5.2':     dict(inp=1.75,  cache=0.175, out=14.00, search=10.00),
+    'gpt-5.5':     dict(inp=5.00,  cache=0.50,  out=30.00, search=10.00),
     'gpt-4.1':     dict(inp=2.00,  cache=0.50,  out=8.00,  search=10.00),
     'gpt-4.1-mini':dict(inp=0.40,  cache=0.10,  out=1.60,  search=10.00),
     'gpt-4o':      dict(inp=2.50,  cache=1.25,  out=10.00, search=10.00),
