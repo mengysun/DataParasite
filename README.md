@@ -46,7 +46,7 @@ Modern coding agents increasingly incorporate web search capabilities, unlocking
 - `--config_file`: task YAML defining schema, prompts, required columns, and default model.
 - `--csv_file`: input entities CSV; must expose the columns referenced by the config. The CSV doesn't have to include only the entities to search for—you can include additional metadata columns that might be helpful for the search task. Coding agents will often be able to intelligently incorporate those columns if needed.
 - `--output_file`: destination JSONL; a cleaned CSV with inputs and outputs is created automatically.
-- `--model`: optional override for the model named in the config.
+- `--model`: optional override for the model named in the config; `--help` lists supported models. Models without a pricing entry are rejected before the output file is overwritten.
 - `--sample`: randomly process only N rows.
 - `--seed`: random seed for sampling (for reproducibility when using `--sample`).
 - `--reasoning-effort`: `low|medium|high`, applicable to GPT-5 and GPT-6 family models.
@@ -57,7 +57,9 @@ Modern coding agents increasingly incorporate web search capabilities, unlocking
 
 Each JSONL record captures the normalized outputs, original inputs, timing, token usage, and cost estimates, making it easy to audit runs or feed downstream pipelines.
 
-The default model is `gpt-6-luna` for affordable, high-volume collection. Use `--model gpt-6-sol` or `--model gpt-6-astra` for more demanding research. All three support web search and structured output through the Responses API. Cost estimates include cache reads and writes at standard short-context rates; long-context requests and other service tiers can cost more. Check [current pricing](https://developers.openai.com/api/docs/pricing) and evaluate a small sample before a full run.
+The default model is `gpt-6-luna` for affordable, high-volume collection. Use `--model gpt-6.1-sol` or `--model gpt-6-astra` for more demanding research. All three support web search and structured output through the Responses API. The GPT-5.6 family is also supported. Cost estimates include cache reads and 30-minute cache writes at standard short-context rates; long-context requests and other service tiers can cost more. Check [current pricing](https://developers.openai.com/api/docs/pricing) and evaluate a small sample before a full run.
+
+The retired `o3-deep-research` and `o4-mini-deep-research` models are no longer supported. See [model availability and retirement dates](docs/PROTIPS.md#model-availability-checked-2026-10-23) when updating older task configs.
 
 ## Task Templates
 Seed and user-created task folders live under `tasks/`. Copy an existing folder (for example, `tasks/Path2Power/`), tweak the YAML schema and prompts, drop in your CSV, and rerun the CLI or agent with those paths.
