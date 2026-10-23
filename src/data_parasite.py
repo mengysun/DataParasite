@@ -21,21 +21,25 @@ import pandas as pd
 # INFRASTRUCTURE CONFIGURATION
 # ============================================================================
 
-# Standard short-context USD rates: https://developers.openai.com/api/docs/pricing
+# Supported models and standard short-context USD rates (checked 2026-10-23).
+# https://developers.openai.com/api/docs/pricing
 PRICING = {
     'gpt-6-luna':  dict(inp=0.10,  cache=0.01,  write=0.125, out=0.50,  search=10.00),
+    'gpt-6.1-sol': dict(inp=2.00,  cache=0.10,  write=2.50,  out=10.00, search=10.00),
     'gpt-6-sol':   dict(inp=2.00,  cache=0.20,  write=2.50,  out=10.00, search=10.00),
     'gpt-6-astra': dict(inp=10.00, cache=1.00,  write=12.50, out=50.00, search=10.00),
+    'gpt-5.6-sol':   dict(inp=4.00, cache=0.40, write=5.00, out=20.00, search=10.00),
+    'gpt-5.6-terra': dict(inp=2.00, cache=0.20, write=2.50, out=12.00, search=10.00),
+    'gpt-5.6-luna':  dict(inp=0.20, cache=0.02, write=0.25, out=1.20,  search=10.00),
     'gpt-5':       dict(inp=1.25,  cache=0.125, out=10.00, search=10.00),
     'gpt-5-mini':  dict(inp=0.25,  cache=0.025, out=2.00,  search=10.00),
     'gpt-5.1':     dict(inp=1.25,  cache=0.125, out=10.00, search=10.00),
     'gpt-5.2':     dict(inp=1.75,  cache=0.175, out=14.00, search=10.00),
+    'gpt-5.5':     dict(inp=5.00,  cache=0.50,  out=30.00, search=10.00),
     'gpt-4.1':     dict(inp=2.00,  cache=0.50,  out=8.00,  search=10.00),
     'gpt-4.1-mini':dict(inp=0.40,  cache=0.10,  out=1.60,  search=10.00),
     'gpt-4o':      dict(inp=2.50,  cache=1.25,  out=10.00, search=10.00),
     'gpt-4o-mini': dict(inp=0.15,  cache=0.075, out=0.60,  search=10.00),
-    'o3-deep-research':      dict(inp=10.00, cache=2.50,  out=40.00, search=10.00),
-    'o4-mini-deep-research': dict(inp=2.00,  cache=0.50,  out=8.00,  search=10.00),
 }
 
 TYPE_MAPPING = {
@@ -88,7 +92,7 @@ def setup_logger(verbose: bool) -> logging.Logger:
     return logging.getLogger("data_parasite")
 
 def compute_cost(model: str, usage: Dict[str, int]) -> float:
-    p = PRICING.get(model, PRICING.get('gpt-4o-mini'))
+    p = PRICING[model]
     cache_writes = usage.get('cache_write_tokens', 0)
     non_cached = max(usage.get('input_tokens', 0) - usage.get('cached_tokens', 0) - cache_writes, 0)
     return (
@@ -293,7 +297,7 @@ Example:
     ap.add_argument("--config_file", required=True, help="Task configuration YAML file")
     ap.add_argument("--csv_file", required=True, help="Input CSV file")
     ap.add_argument("--output_file", required=True, help="Output JSONL path")
-    ap.add_argument("--model", help="OpenAI model (overrides config default)")
+    ap.add_argument("--model", choices=sorted(PRICING), help="OpenAI model (overrides config default)")
     ap.add_argument("--sample", type=int, help="Randomly sample N rows")
     ap.add_argument("--seed", type=int, help="Random seed for sampling (for reproducibility)")
     ap.add_argument("--reasoning-effort", choices=["low","medium","high"], default="medium",
@@ -323,6 +327,8 @@ Example:
 
     # Use model from CLI or config default
     model = args.model or config.default_model
+    if model not in PRICING:
+        ap.error(f"Unsupported model {model!r}. Use --model gpt-6-luna or another model listed in --help.")
 
     # Check input CSV
     src = Path(args.csv_file)
